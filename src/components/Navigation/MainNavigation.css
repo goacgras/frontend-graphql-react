@@ -8,6 +8,8 @@
     padding: 0 1rem;
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
 }
 
 .main-navigation__logo h1 {
@@ -24,19 +26,31 @@
     margin: 0;
     padding: 0;
     list-style: none;
+    align-items: center;
 }
 
 .main-navigation__items li {
     margin: 0 1rem;
 }
 
+.main-navigation__items button,
 .main-navigation__items a {
     text-decoration: none;
     color: #000;
+    padding: 0.25rem 0.5rem;
+    font: inherit;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    vertical-align: middle;
+    margin: 0;
 }
 
 .main-navigation__items a:hover,
 .main-navigation__items a:active,
-.main-navigation__items a.active {
+.main-navigation__items a.active,
+.main-navigation__items button:hover,
+.main-navigation__items button:active {
     color: #f8e264;
+    border-radius: 5px;
 }
