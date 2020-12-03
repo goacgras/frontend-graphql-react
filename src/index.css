@@ -4,10 +4,12 @@ body {
     font-family: 'Noto Sans JP', sans-serif;
 }
 .form-control label,
-.form-control input {
+.form-control input,
+.form-control textarea {
     width: 100%;
     display: block;
     outline: none;
+    font-style: inherit;
 }
 
 .form-control label {
