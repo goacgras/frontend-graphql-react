@@ -8,14 +8,15 @@ const Modal = ({
     canConfirm,
     children,
     onCancel,
-    onConfirm
+    onConfirm,
+    confirmText
 }) => {
     return (
         <div className="modal">
-            <header className="modal__header">{title}</header>
-            <section className="modal__content">
-                <h1>{children}</h1>
-            </section>
+            <header className="modal__header">
+                <h1>{title}</h1>
+            </header>
+            <section className="modal__content">{children}</section>
             <section className="modal__actions">
                 {canCancel && (
                     <button className="btn" onClick={onCancel}>
@@ -24,7 +25,7 @@ const Modal = ({
                 )}
                 {canConfirm && (
                     <button className="btn" onClick={onConfirm}>
-                        Confirm
+                        {confirmText}
                     </button>
                 )}
             </section>
