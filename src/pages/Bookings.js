@@ -3,15 +3,19 @@ import React, { useEffect, useState, useContext } from 'react';
 import AuthContext from '../context/auth-context';
 import Spinner from '../components/Spinner/Spinner';
 import BookingList from '../components/Bookings/BookingList/BookingList';
+import BookingChart from '../components/Bookings/BookingChart/BookingChart';
+import BookingControl from '../components/Bookings/BookingControl/BookingControl';
 
 const Bookings = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [bookings, setBookings] = useState([]);
-    // const [fetchingBooking, setFetchingBooking] = useState(true);
+    const [isActive, setIsActive] = useState(true);
+    const [outputType, setOutputType] = useState('list');
     const contextType = useContext(AuthContext);
 
     useEffect(() => {
         const fetchBooking = () => {
+            console.log('[FETCH BOOKING ACTIVE]');
             setIsLoading(true);
             const requestBody = {
                 query: ` 
@@ -23,6 +27,7 @@ const Bookings = () => {
                                 _id
                                 title
                                 date
+                                price
                             }
                         }
                     }
@@ -44,30 +49,41 @@ const Bookings = () => {
                     return res.json();
                 })
                 .then((resData) => {
-                    const bookings = resData.data.bookings;
-                    console.log('[FETCH BOOKING]: ', bookings);
-                    setBookings(bookings);
-                    setIsLoading(false);
+                    if (isActive) {
+                        const bookings = resData.data.bookings;
+                        console.log('[FETCH BOOKING]: ', bookings);
+                        setBookings(bookings);
+                        setIsLoading(false);
+                    }
                 })
                 .catch((err) => {
-                    console.log(err);
-                    setIsLoading(false);
+                    if (isActive) {
+                        console.log(err);
+                        setIsLoading(false);
+                    }
                 });
         };
         fetchBooking();
-    }, [contextType.token]);
+
+        return () => {
+            setIsActive(false);
+        };
+    }, [contextType.token, isActive]);
 
     const deleteBookingHandler = (bookingId) => {
         setIsLoading(true);
         const requestBody = {
             query: ` 
-                mutation {
-                    cancelBooking(bookingId: "${bookingId}") {
+                mutation CancelBooking($id: ID!) {
+                    cancelBooking(bookingId: $id) {
                         _id
                         title
                     }
                 }
-            `
+            `,
+            variables: {
+                id: bookingId
+            }
         };
 
         fetch('http://localhost:5000/graphql', {
@@ -99,18 +115,37 @@ const Bookings = () => {
             });
     };
 
-    return (
-        <React.Fragment>
-            {isLoading ? (
-                <Spinner />
-            ) : (
-                <BookingList
-                    bookings={bookings}
-                    onDelete={deleteBookingHandler}
+    const changeTabHandler = (outputType) => {
+        if (outputType === 'list') {
+            setOutputType('list');
+        } else {
+            setOutputType('chart');
+        }
+    };
+
+    let content = <Spinner />;
+    if (!isLoading) {
+        content = (
+            <React.Fragment>
+                <BookingControl
+                    activeOutputType={outputType}
+                    changeTabHandler={changeTabHandler}
                 />
-            )}
-        </React.Fragment>
-    );
+                <div>
+                    {outputType === 'list' ? (
+                        <BookingList
+                            bookings={bookings}
+                            onDelete={deleteBookingHandler}
+                        />
+                    ) : (
+                        <BookingChart bookings={bookings} />
+                    )}
+                </div>
+            </React.Fragment>
+        );
+    }
+
+    return <React.Fragment>{content}</React.Fragment>;
 };
 
 export default Bookings;

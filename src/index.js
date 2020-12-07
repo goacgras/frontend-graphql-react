@@ -8,9 +8,9 @@ import { BrowserRouter } from 'react-router-dom';
 
 const app = (
     <BrowserRouter>
-        <React.StrictMode>
-            <App />
-        </React.StrictMode>
+        {/* <React.StrictMode> */}
+        <App />
+        {/* </React.StrictMode> */}
     </BrowserRouter>
 );
 

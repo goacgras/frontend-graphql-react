@@ -13,6 +13,7 @@ const Events = () => {
     const [events, setEvents] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState(null);
+    const [isActive, setIsActive] = useState(true);
     const titleEl = useRef();
     const priceEl = useRef();
     const dateEl = useRef();
@@ -22,9 +23,61 @@ const Events = () => {
     // console.log(modal);
 
     useEffect(() => {
-        console.log('useEf');
+        const fetchEvents = () => {
+            setIsLoading(true);
+            const requestBody = {
+                query: `
+                    query {
+                        events {
+                            _id
+                            title
+                            description
+                            date
+                            price
+                            creator {
+                                _id
+                                email
+                            }
+                        }
+                    }
+                `
+            };
+
+            fetch('http://localhost:5000/graphql', {
+                method: 'POST',
+                body: JSON.stringify(requestBody),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then((res) => {
+                    if (res.status !== 200 && res.status !== 201) {
+                        throw new Error('Failed');
+                    }
+                    return res.json();
+                })
+                .then((resData) => {
+                    if (isActive) {
+                        const events = resData.data.events;
+                        console.log('[FETCHING EVENTS]', events);
+                        setEvents(events);
+                        setIsLoading(false);
+                    }
+                })
+                .catch((err) => {
+                    if (isActive) {
+                        console.log(err);
+                        setIsLoading(false);
+                    }
+                });
+        };
+
         fetchEvents();
-    }, []);
+
+        return () => {
+            setIsActive(false);
+        };
+    }, [isActive]);
 
     const bookEventHandler = () => {
         if (!contextType.token) {
@@ -33,15 +86,18 @@ const Events = () => {
         }
         const requestBody = {
             query: `
-                mutation {
-                    bookEvent(eventId: "${selectedEvent._id}"){
+                mutation BookEvent($id: ID!){
+                    bookEvent(eventId: $id){
                         _id
                         createdAt
                         updatedAt
                     }
                 }
 
-            `
+            `,
+            variables: {
+                id: selectedEvent._id
+            }
         };
 
         fetch('http://localhost:5000/graphql', {
@@ -82,51 +138,6 @@ const Events = () => {
         setModal(true);
     };
 
-    const fetchEvents = () => {
-        setIsLoading(true);
-        const requestBody = {
-            query: `
-                query {
-                    events {
-                        _id
-                        title
-                        description
-                        date
-                        price
-                        creator {
-                            _id
-                            email
-                        }
-                    }
-                }
-            `
-        };
-
-        fetch('http://localhost:5000/graphql', {
-            method: 'POST',
-            body: JSON.stringify(requestBody),
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-            .then((res) => {
-                if (res.status !== 200 && res.status !== 201) {
-                    throw new Error('Failed');
-                }
-                return res.json();
-            })
-            .then((resData) => {
-                const events = resData.data.events;
-                console.log('[FETCHING EVENTS]', events);
-                setEvents(events);
-                setIsLoading(false);
-            })
-            .catch((err) => {
-                console.log(err);
-                setIsLoading(false);
-            });
-    };
-
     const modalHandler = () => {
         const title = titleEl.current.value;
         const price = +priceEl.current.value;
@@ -148,8 +159,8 @@ const Events = () => {
 
         const requestBody = {
             query: `
-                mutation {
-                    createEvent(eventInput: {title: "${title}", description: "${description}", price: ${price}, date: "${date}"}) {
+                mutation CreateEvent($title: String!, $description: String!, $price: Float!, $date: String!){
+                    createEvent(eventInput: {title: $title, description: $description, price: $price, date: $date}) {
                         _id
                         title
                         description
@@ -157,7 +168,13 @@ const Events = () => {
                         price
                     }
                 }
-            `
+            `,
+            variables: {
+                title: title,
+                description: description,
+                price: price,
+                date: date
+            }
         };
 
         const token = contextType.token;
